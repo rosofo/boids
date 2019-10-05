@@ -1,6 +1,5 @@
 use glium as gl;
 use gl::{glutin, Surface};
-use std::time::Instant;
 
 mod draw;
 mod utilities;
@@ -11,19 +10,21 @@ fn main() {
         new_window("Hello World",
                    glutin::dpi::LogicalSize::new(1024.0, 768.0));
 
-    let start = Instant::now();
     let mut closed = false;
     while !closed {
         events_loop.poll_events(|e| if window_closed(e) { closed = true });
 
         let mut frame = display.draw();
 
-        if start.elapsed().as_millis() / 1000 % 2 == 0 {
-            frame.clear_color(0.2, 0.3, 0.3, 1.0)
-        } else {
-            frame.clear_color(0.0, 1.0, 0.0, 1.0)
-        }
+        let shape: Vec<draw::Vertex> = vec![];
 
+        let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &shape).unwrap();
+        let indices = gl::index::NoIndices(gl::index::PrimitiveType::TrianglesList);
+
+        let program = draw::simple_program(&display).unwrap();
+
+        frame.draw(&vertex_buffer, &indices, &program, &gl::uniforms::EmptyUniforms,
+                   &Default::default()).unwrap();
         frame.finish().unwrap();
     }
 }
