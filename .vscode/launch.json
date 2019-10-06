@@ -6,14 +6,19 @@
     "configurations": [
         {
             "name": "(Windows) Launch",
-            "type": "cppvsdbg",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/target/debug/boids.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false
+            "terminal": "integrated",
+            "cargo": {
+                "args": ["build", "--bin=boids"],
+                "filter": { // Filter applied to compilation artifacts (optional)
+                    "name": "boids",
+                    "kind": "bin"
+                },
+                "program": "cargo",
+                "cwd": "${workspaceFolder}",
+                "sourceLanguages": ["rust"],
+            },
         }
     ]
 }
