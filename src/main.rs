@@ -11,7 +11,7 @@ use utilities::*;
 
 fn main() {
     let (display, mut events_loop) =
-        new_window("Hello World", glutin::dpi::LogicalSize::new(1024.0, 768.0));
+        new_window("Boids", glutin::dpi::LogicalSize::new(1024.0, 768.0));
 
     let mut entities = [
         physics::entity(na::vec2(0.0, 0.0), 1.0),
@@ -37,7 +37,7 @@ fn main() {
 
         if delta.elapsed().as_secs_f64() >= 0.016 {
             for entity in &mut entities {
-                physics::add_force(entity, &na::vec2(0.01, 0.0));
+                physics::add_force(entity, &na::vec2(-0.01, 0.0));
                 physics::step_physics(entity, 0.016);
             }
 

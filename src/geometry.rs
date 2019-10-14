@@ -20,7 +20,8 @@ pub fn boid(scale: f32) -> Model {
 pub fn position_velocity_to_matrix(pos: &na::Vec2, vel: &na::Vec2) -> na::Mat3 {
     let mut rotation = na::normalize(&vel.xy());
     if vel.xy() == na::zero() { rotation = na::vec2(0.0, 1.0) }
-    let angle = na::angle(&na::vec2(0.0, 1.0), &rotation);
+    let mut angle = na::angle(&na::vec2(0.0, 1.0), &rotation);
+    if rotation.x > 0.0 { angle = -angle }
     na::translation2d(&pos.xy()) * na::rotation2d(angle)
 }
 
