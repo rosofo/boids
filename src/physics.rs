@@ -3,16 +3,20 @@ use nalgebra_glm as na;
 pub struct Entity {
     pub pos: na::Vec2,
     pub vel: na::Vec2,
+    pub rot: na::Vec2,
     pub mass: f32,
     pub forces: Vec<na::Vec2>,
 }
 
-pub fn entity(pos: na::Vec2, mass: f32) -> Entity {
-    Entity {
-        pos: pos,
-        vel: na::zero(),
-        mass: mass,
-        forces: vec![]
+impl Default for Entity {
+    fn default() -> Entity {
+        Entity {
+            pos: na::zero(),
+            vel: na::zero(),
+            rot: na::vec2(1.0, 0.0),
+            mass: 1.0,
+            forces: vec![]
+        }
     }
 }
 
