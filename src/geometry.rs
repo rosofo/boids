@@ -17,18 +17,23 @@ pub fn boid(scale: f32) -> Model {
     .collect()
 }
 
-pub fn position_velocity_to_matrix(pos: &na::Vec2, vel: &na::Vec2) -> na::Mat3 {
-    let mut rotation = na::normalize(&vel.xy());
-    if vel.xy() == na::zero() { rotation = na::vec2(0.0, 1.0) }
+pub fn position_rotation_to_matrix(pos: &na::Vec2, rot: &na::Vec2) -> na::Mat3 {
+    let mut rotation = na::normalize(&rot.xy());
+    if rot.xy() == na::zero() {
+        rotation = na::vec2(0.0, 1.0)
+    }
+
     let mut angle = na::angle(&na::vec2(0.0, 1.0), &rotation);
-    if rotation.x > 0.0 { angle = -angle }
+    if rotation.x > 0.0 {
+        angle = -angle
+    }
     na::translation2d(&pos.xy()) * na::rotation2d(angle)
 }
 
-pub fn position_velocity_to_model(pos: &na::Vec2, vel: &na::Vec2, model: &[na::Vec3]) -> Model {
+pub fn position_rotation_to_model(pos: &na::Vec2, vel: &na::Vec2, model: &[na::Vec3]) -> Model {
     model
         .iter()
-        .map(|v| position_velocity_to_matrix(pos, vel) * v)
+        .map(|v| position_rotation_to_matrix(pos, vel) * v)
         .collect()
 }
 
