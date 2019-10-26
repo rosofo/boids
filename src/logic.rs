@@ -123,7 +123,7 @@ pub mod goals {
     }
 }
 
-/// Strategies take a `ResultantGoal` and apply forward force and/or change the angular velocity of a boid
+/// Strategies translate goals into behaviours
 pub mod strategies {
     use nalgebra_glm as na;
     use crate::physics as physics;
@@ -132,11 +132,16 @@ pub mod strategies {
 
     pub fn v1(ResultantGoal(g): ResultantGoal, boid: &physics::Entity, max_ang_vel: f32, max_force: f32) -> physics::Entity {
         let angle_between = na::angle(&g, &boid.rot);
+
         let angle_coefficient = if angle_between <= PI { (PI - angle_between) / PI } else { (angle_between % PI) / PI };
+        let force = physics::forward_force(&boid, angle_coefficient * na::magnitude(&g) * max_force);
+
+        let angle_coefficient = if angle_between <= PI { angle_between / PI } else { (PI - (angle_between % PI)) / PI };
+        let ang_vel = angle_coefficient * max_ang_vel;
 
         let mut updated = boid.clone();
-        let force = physics::forward_force(&updated, angle_coefficient * na::magnitude(&g) * max_force);
         physics::add_force(&mut updated, &force);
+        updated.angular_vel = ang_vel;
         updated
     }
 
@@ -149,6 +154,10 @@ pub mod strategies {
         use std::f32::consts::PI;
         use assert_approx_eq::*;
 
+        // I wrote this test before the function, and it ended up being one of those times
+        // where in trying to write the test, I just wrote the function logic instead.
+        // I even copy-pasted some of it to the real thing!
+        // This is not what I imagine effective property testing to be.
         proptest! {
             #[test]
             fn test_v1(
@@ -185,6 +194,9 @@ pub mod strategies {
                 assert_approx_eq!(na::magnitude(&updated.forces[0]),
                                   angle_ratio * na::magnitude(&resultant_goal) * max_force,
                                   1e-3f32);
+
+                assert!(na::magnitude(&updated.forces[0]) <= max_force);
+                assert!(updated.angular_vel <= max_ang_vel);
             }
         }
     }

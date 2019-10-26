@@ -9,6 +9,7 @@ mod logic;
 mod physics;
 mod utilities;
 mod test_utils;
+mod generation;
 use utilities::*;
 
 fn main() {
