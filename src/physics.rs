@@ -1,5 +1,6 @@
 use nalgebra_glm as na;
 
+#[derive(Debug)]
 pub struct Entity {
     pub pos: na::Vec2,
     pub vel: na::Vec2,
@@ -17,7 +18,7 @@ impl Default for Entity {
             angular_vel: 0.0,
             rot: na::vec2(1.0, 0.0),
             mass: 1.0,
-            forces: vec![]
+            forces: vec![],
         }
     }
 }
@@ -30,7 +31,7 @@ impl Clone for Entity {
             angular_vel: self.angular_vel,
             rot: self.rot.clone(),
             mass: self.mass,
-            forces: self.forces.clone()
+            forces: self.forces.clone(),
         }
     }
 }
@@ -44,7 +45,7 @@ pub fn step_physics(entity: &mut Entity, delta_time: f32) {
     let acceleration = resultant / entity.mass;
 
     entity.vel = entity.vel + (acceleration * delta_time);
-    entity.pos = entity.pos + (entity.vel   * delta_time);
+    entity.pos = entity.pos + (entity.vel * delta_time);
     entity.rot = na::rotate_vec2(&entity.rot, entity.angular_vel * delta_time);
 }
 

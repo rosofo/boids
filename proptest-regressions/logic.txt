@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 8bb9341d9d8cdab47bc2ac4453b0d57ad5bf54113d3995b01cac5cbe3d6b0341 # shrinks to boids = []
+cc f8be775d07229995741540b9e636620909890c1d8fd2d9241c29b42ed3c94a38 # shrinks to resultant_goal = Matrix { data: [-0.39871788, -0.25076532] }, rot_angle = 0.0, max_ang_vel = 0.01, max_force = 0.92297655
+cc 120a59b18bf33825cb6f073c52fb9471a0d948685ec16a1966c8eab8736a62c1 # shrinks to resultant_goal = Matrix { data: [0.29192162, -0.36934328] }, rot_angle = 0.0, max_ang_vel = 0.01, max_force = 0.70252126

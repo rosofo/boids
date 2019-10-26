@@ -30,5 +30,10 @@ pub fn window_closed(event: &glutin::Event) -> bool {
 
 pub fn mean(vectors: &[na::Vec2]) -> na::Vec2 {
     let sum: na::Vec2 = vectors.iter().sum();
-    sum / (vectors.len() as f32)
+    let length: f32 = vectors.len() as f32;
+    if length > 0.0 {
+        sum / length
+    } else {
+        sum
+    }
 }

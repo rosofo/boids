@@ -8,6 +8,7 @@ mod geometry;
 mod logic;
 mod physics;
 mod utilities;
+mod test_utils;
 use utilities::*;
 
 fn main() {
@@ -35,7 +36,7 @@ fn main() {
         });
 
         if delta.elapsed().as_secs_f64() >= 0.016 {
-            for entity in &mut entities {
+            for entity in &mut entities.0 {
                 physics::add_force(entity, &na::vec2(0.0, -0.1));
                 physics::add_force(entity, &na::vec2(0.0, 0.11));
                 physics::step_physics(entity, 0.016);
@@ -44,7 +45,7 @@ fn main() {
             delta = Instant::now();
         }
 
-        let pos_vels = entities.iter().map(|e| (e.pos, e.vel));
+        let pos_vels = entities.0.iter().map(|e| (e.pos, e.vel));
         let mut boids: Vec<draw::Vertex> = vec![];
         for (pos, vel) in pos_vels {
             let model = geometry::position_rotation_to_model(&pos, &vel, &geometry::boid(0.02));
