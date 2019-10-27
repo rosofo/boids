@@ -38,15 +38,16 @@ fn step_world<F>(
 
 fn main() {
     let config = config::Config {
-        influence_radius: boids::goals::InfluenceRadius(1.0),
+        influence_radius: boids::goals::InfluenceRadius(2.0),
         drag_coefficient: 1.0,
-        population: 10,
+        population: 2,
         max_force: 0.1,
         max_ang_vel: 0.5,
     };
 
     let goal_functions: Vec<Box<dyn Fn(&physics::Entity, &boids::World) -> boids::goals::Goal>> = vec![
-        Box::new(|_, world| boids::goals::center_of_mass(world, config.influence_radius)),
+        //Box::new(|_, world| boids::goals::center_of_mass(world, config.influence_radius)),
+        Box::new(|boid, _| boids::goals::static_goal(boid, &na::vec2(1.0, 0.0)))
     ];
 
     let (display, mut events_loop) =
