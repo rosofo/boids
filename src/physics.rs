@@ -1,4 +1,5 @@
 use nalgebra_glm as na;
+use assert_approx_eq::*;
 
 #[derive(Debug)]
 pub struct Entity {
@@ -36,13 +37,17 @@ impl Clone for Entity {
     }
 }
 
-pub fn add_force(entity: &mut Entity, force: &na::Vec2) {
-    entity.forces.push(force.clone());
+pub fn add_force(entity: &mut Entity, force: na::Vec2) {
+    let angle = na::angle(&entity.rot, &force);
+    if (angle * 100.0).round() / 100.0 != 0.0 && na::magnitude(&force) > 0.00001 {
+        return;
+    }
+    entity.forces.push(force);
 }
 
 pub fn step_entity_physics(entity: &mut Entity, drag_coefficient: f32, delta_time: f32) {
     let drag = drag_force(1.0, drag_coefficient, &entity.vel);
-    add_force(entity, &drag);
+    add_force(entity, drag);
 
     let resultant: na::Vec2 = entity.forces.iter().fold(na::zero(), |acc, e| acc + e);
     let acceleration = resultant / entity.mass;

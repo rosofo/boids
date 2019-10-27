@@ -91,6 +91,11 @@ pub mod goals {
         Goal(mean(&positions) / radius)
     }
 
+    pub fn static_goal(boid: &Entity, position: &na::Vec2) -> Goal {
+        let relative_position = position - boid.pos;
+        Goal(na::normalize(&relative_position))
+    }
+
     mod tests {
         use crate::boids::goals::*;
         use crate::test_utils::*;
@@ -99,13 +104,16 @@ pub mod goals {
 
         proptest! {
             #[test]
-            fn test_region_of_influence(boids in proptest::collection::vec(entity_at_pos(na::vec2(-3.0, -3.0), na::vec2(3.0, 3.0)), 10..20)) {
-                let origin_boid: Entity = Entity { pos: na::zero(), .. Default::default() };
+            fn test_region_of_influence(
+                radius in 0.1..3.0f32,
+                boids in proptest::collection::vec(entity_at_pos(na::vec2(-3.0, -3.0), na::vec2(3.0, 3.0)), 10..20)
+            ) {
                 let world = World(boids);
-                let World(influential_boids) = region_of_influence(&origin_boid, &world, InfluenceRadius(2.0));
+                let origin_boid = &world.0[0];
+                let World(influential_boids) = region_of_influence(origin_boid, &world, InfluenceRadius(radius));
 
                 for boid in influential_boids {
-                    assert!(na::magnitude(&boid.pos) <= 2.0)
+                    assert!(na::magnitude(&boid.pos) <= radius)
                 }
             }
         }
@@ -155,7 +163,7 @@ pub mod strategies {
         let ang_vel = angle_coefficient * max_ang_vel;
 
         let mut updated = boid.clone();
-        physics::add_force(&mut updated, &force);
+        physics::add_force(&mut updated, force);
         updated.angular_vel = ang_vel;
         updated
     }
@@ -215,6 +223,30 @@ pub mod strategies {
                 assert!(na::are_collinear2d(force, &boid.rot, 0.001));
                 if force != &na::zero() { assert_approx_eq!(na::angle(force, &boid.rot), 0.0, 1e-3f32) };
                 assert!(updated.angular_vel <= max_ang_vel);
+            }
+        }
+
+        #[test]
+        fn unit_test_v1() {
+            for (g, expected_av, expected_f) in &[
+                (na::vec2(0.5, 0.0), 0.5, 0.25),
+                (na::vec2(0.0, -1.0), 1.0, 0.0)
+            ] {
+                let resultant_goal = ResultantGoal(*g);
+                let rot = na::vec2(0.0, 1.0);
+
+                let boid = Entity {
+                    rot: rot,
+                    ..Default::default()
+                };
+
+                let updated = v1(resultant_goal, &boid, 1.0, 1.0);
+                let force = &updated.forces[0];
+                let ang_vel = updated.angular_vel;
+
+                assert_approx_eq!(na::angle(force, &rot), 0.0, 1e-3f32);
+                assert_approx_eq!(na::magnitude(force), expected_f);
+                assert_approx_eq!(ang_vel, expected_av);
             }
         }
     }
