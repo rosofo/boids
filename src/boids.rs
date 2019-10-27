@@ -230,7 +230,7 @@ pub mod strategies {
         fn unit_test_v1() {
             for (g, expected_av, expected_f) in &[
                 (na::vec2(0.5, 0.0), 0.5, 0.25),
-                (na::vec2(0.0, -1.0), 1.0, 0.0)
+                (na::vec2(0.0, -1.0), 1.0, 0.0),
             ] {
                 let resultant_goal = ResultantGoal(*g);
                 let rot = na::vec2(0.0, 1.0);

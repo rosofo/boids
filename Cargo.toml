@@ -12,3 +12,6 @@ nalgebra-glm = "*"
 proptest = "*"
 assert_approx_eq = "*"
 rand = "*"
+toml = "*"
+serde = { version = "*", features = ["derive"] }
+hotwatch = "*"

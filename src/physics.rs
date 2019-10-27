@@ -1,5 +1,5 @@
-use nalgebra_glm as na;
 use assert_approx_eq::*;
+use nalgebra_glm as na;
 
 #[derive(Debug)]
 pub struct Entity {
@@ -60,21 +60,27 @@ pub fn step_entity_physics(entity: &mut Entity, drag_coefficient: f32, delta_tim
 pub fn drag_force(area: f32, c: f32, vel: &na::Vec2) -> na::Vec2 {
     let force_magnitude = 0.5 * area * c * na::dot(vel, vel);
 
-    if force_magnitude == 0.0 { na::zero() }
-    else { -force_magnitude * na::normalize(vel) }
+    if force_magnitude == 0.0 {
+        na::zero()
+    } else {
+        -force_magnitude * na::normalize(vel)
+    }
 }
 
 pub fn forward_force(entity: &Entity, magnitude: f32) -> na::Vec2 {
-    if magnitude < 0.0 { na::zero() }
-    else { magnitude * na::normalize(&entity.rot) }
+    if magnitude < 0.0 {
+        na::zero()
+    } else {
+        magnitude * na::normalize(&entity.rot)
+    }
 }
 
 mod tests {
-    use proptest::prelude::*;
-    use crate::test_utils::*;
     use crate::physics::*;
-    use nalgebra_glm as na;
+    use crate::test_utils::*;
     use assert_approx_eq::*;
+    use nalgebra_glm as na;
+    use proptest::prelude::*;
 
     proptest! {
         #[test]
