@@ -1,6 +1,6 @@
+use crate::physics::Entity;
 use nalgebra_glm as na;
 use proptest::prelude::*;
-use crate::physics::Entity;
 
 prop_compose! {
     pub fn vec2(min: na::Vec2, max: na::Vec2)

@@ -1,33 +1,27 @@
 use nalgebra_glm as na;
+use std::collections::VecDeque;
 
 use crate::physics::*;
 
 pub struct World(pub Vec<Entity>);
 
 impl World {
-    pub fn map_with_rest_of_world<A>(&self, f: impl Fn(&Entity, &World) -> A) -> Vec<A> {
-        let mut rest = self.0.clone();
-        let mut before = vec![];
-        let mut results = vec![];
-
-        let mut next_boid = rest.pop();
-        while next_boid.is_some() {
-            let current_boid = next_boid.unwrap();
-            let other_boids = World(
-                before
-                    .iter()
-                    .chain(rest.iter())
-                    .map(|e| e.clone())
-                    .collect(),
-            );
-
-            results.push(f(&current_boid, &other_boids));
-
-            before.push(current_boid);
-            next_boid = rest.pop();
+    pub fn map_with_rest_of_world(&self, f: impl Fn(&Entity, &World) -> Entity) -> World {
+        if self.0.is_empty() {
+            return World(Vec::new());
         }
 
-        results
+        let mut result = vec![];
+        let mut deque = VecDeque::from(self.0.clone());
+        for _ in 0..deque.len() {
+            let current = deque.pop_front().unwrap();
+
+            result.push(f(&current, &World(Vec::from(deque.clone()))));
+
+            deque.push_back(current);
+        }
+
+        World(result)
     }
 }
 
@@ -45,28 +39,35 @@ pub fn origin_at_boid(boid: &Entity, World(boids): &World) -> World {
 }
 
 pub mod goals {
-    use crate::logic::*;
+    use crate::boids::*;
     use crate::utilities::*;
     use nalgebra_glm as na;
 
+    /// 0 <= magnitude <= 1
     pub struct Goal(pub na::Vec2);
+
     /// 0 <= magnitude <= 1
     pub struct ResultantGoal(pub na::Vec2);
-    /// unbounded
 
     #[derive(Clone, Copy)]
+    /// Must never be zero
     pub struct InfluenceRadius(pub f32);
-    /// must never be zero
 
-    pub fn resultant_goal<I: Iterator<Item = fn(&World) -> Goal>>(
+    pub fn resultant_goal<F>(
         boid: &Entity,
         other_boids: &World,
         radius: InfluenceRadius,
-        behaviours: I,
-    ) -> ResultantGoal {
+        goal_functions: &[F],
+    ) -> ResultantGoal
+    where
+        F: Fn(&Entity, &World) -> Goal,
+    {
         let influential_boids = region_of_influence(boid, other_boids, radius);
 
-        let goals: Vec<na::Vec2> = behaviours.map(|f| f(&influential_boids).0).collect();
+        let goals: Vec<na::Vec2> = goal_functions
+            .iter()
+            .map(|f| f(boid, &influential_boids).0)
+            .collect();
         ResultantGoal(mean(&goals))
     }
 
@@ -91,10 +92,10 @@ pub mod goals {
     }
 
     mod tests {
-        use crate::logic::goals::*;
+        use crate::boids::goals::*;
+        use crate::test_utils::*;
         use nalgebra_glm as na;
         use proptest::prelude::*;
-        use crate::test_utils::*;
 
         proptest! {
             #[test]
@@ -123,20 +124,34 @@ pub mod goals {
     }
 }
 
-/// Strategies translate goals into behaviours
+/// Strategies translate goals into boidss
 pub mod strategies {
+    use crate::boids::goals::ResultantGoal;
+    use crate::physics;
     use nalgebra_glm as na;
-    use crate::physics as physics;
-    use crate::logic::goals::ResultantGoal;
     use std::f32::consts::PI;
 
-    pub fn v1(ResultantGoal(g): ResultantGoal, boid: &physics::Entity, max_ang_vel: f32, max_force: f32) -> physics::Entity {
+    pub fn v1(
+        ResultantGoal(g): ResultantGoal,
+        boid: &physics::Entity,
+        max_ang_vel: f32,
+        max_force: f32,
+    ) -> physics::Entity {
         let angle_between = na::angle(&g, &boid.rot);
 
-        let angle_coefficient = if angle_between <= PI { (PI - angle_between) / PI } else { (angle_between % PI) / PI };
-        let force = physics::forward_force(&boid, angle_coefficient * na::magnitude(&g) * max_force);
+        let angle_coefficient = if angle_between <= PI {
+            (PI - angle_between) / PI
+        } else {
+            (angle_between % PI) / PI
+        };
+        let force =
+            physics::forward_force(&boid, angle_coefficient * na::magnitude(&g) * max_force);
 
-        let angle_coefficient = if angle_between <= PI { angle_between / PI } else { (PI - (angle_between % PI)) / PI };
+        let angle_coefficient = if angle_between <= PI {
+            angle_between / PI
+        } else {
+            (PI - (angle_between % PI)) / PI
+        };
         let ang_vel = angle_coefficient * max_ang_vel;
 
         let mut updated = boid.clone();
@@ -146,13 +161,13 @@ pub mod strategies {
     }
 
     mod tests {
+        use crate::boids::strategies::*;
+        use crate::physics::Entity;
+        use crate::test_utils::*;
+        use assert_approx_eq::*;
         use nalgebra_glm as na;
         use proptest::prelude::*;
-        use crate::logic::strategies::*;
-        use crate::test_utils::*;
-        use crate::physics::Entity;
         use std::f32::consts::PI;
-        use assert_approx_eq::*;
 
         // I wrote this test before the function, and it ended up being one of those times
         // where in trying to write the test, I just wrote the function logic instead.
@@ -181,7 +196,7 @@ pub mod strategies {
 
                 // otherwise
                 // F = angle_coefficient * |goal| * max_force
-                
+
                 let boid = Entity {
                     rot: na::rotate_vec2(&na::vec2(1.0, 0.0), rot_angle),
                     .. Default::default()
@@ -195,7 +210,10 @@ pub mod strategies {
                                   angle_ratio * na::magnitude(&resultant_goal) * max_force,
                                   1e-3f32);
 
-                assert!(na::magnitude(&updated.forces[0]) <= max_force);
+                let force = &updated.forces[0];
+                assert!(na::magnitude(force) <= max_force);
+                assert!(na::are_collinear2d(force, &boid.rot, 0.001));
+                if force != &na::zero() { assert_approx_eq!(na::angle(force, &boid.rot), 0.0, 1e-3f32) };
                 assert!(updated.angular_vel <= max_ang_vel);
             }
         }
