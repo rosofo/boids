@@ -17,13 +17,14 @@ pub fn read_config(path: &str) -> Config {
         .expect("Config file unreadable.")
 }
 
-pub fn watch_config(path: &'static str, config_sender: mpsc::Sender<Config>) -> Hotwatch {
+pub fn watch_config(path: &'static str) -> (mpsc::Receiver<Config>, Hotwatch) {
+    let (sender, receiver) = mpsc::channel();
     let mut hotwatch = Hotwatch::new().unwrap();
     hotwatch.watch(path, move |event| {
         if let Event::Write(_) = event {
             let config = read_config(path);
-            config_sender.send(config).unwrap();
+            sender.send(config).unwrap();
         }
     }).unwrap();
-    hotwatch
+    (receiver, hotwatch)
 }

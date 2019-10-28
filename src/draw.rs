@@ -73,12 +73,24 @@ impl Drawer {
         let indices_types = self.types.iter().enumerate();
         let vertices = &mut self.vertices;
 
+        let mut index = None;
         indices_types.for_each(|(i, prim_type)| {
-            let converted = verts.iter().map(vec3_to_vertex);
             if *prim_type == kind {
-                vertices[i].extend(converted);
+                index = Some(i);
             }
+
+            return;
         });
+
+        let converted = verts.iter().map(vec3_to_vertex);
+
+        if index.is_none() {
+            vertices.push(converted.collect());
+            self.types.push(kind);
+        } else {
+            vertices[index.unwrap()].extend(converted);
+        }
+
     }
 
     pub fn draw(&mut self, frame: &mut gl::Frame) {
@@ -87,6 +99,9 @@ impl Drawer {
         types_vertices.for_each(|(prim_type, verts)| {
             self.draw_vertices(frame, verts, *prim_type);
         });
+
+        self.vertices.clear();
+        self.types.clear();
     }
 
     pub fn draw_vertices(

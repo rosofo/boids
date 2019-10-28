@@ -1,7 +1,9 @@
 use nalgebra_glm as na;
 use std::collections::VecDeque;
 
-use crate::physics::*;
+use crate::physics;
+use crate::physics::Entity;
+use crate::config;
 
 pub struct World(pub Vec<Entity>);
 
@@ -24,6 +26,35 @@ impl World {
         World(result)
     }
 }
+
+pub fn step_world<F>(
+    world: &World,
+    config: &config::Config,
+    goal_functions: &[F],
+    delta_time: f32,
+) -> World
+where
+    F: Fn(&physics::Entity, &World) -> goals::Goal,
+{
+    let mut new_world = world.clone().map_with_rest_of_world(|boid, world| {
+        let resultant_goal = goals::resultant_goal(
+            boid,
+            world,
+            goals::InfluenceRadius(config.influence_radius),
+            goal_functions,
+        );
+        let updated =
+            strategies::v1(resultant_goal, boid, config.max_ang_vel, config.max_force);
+        updated
+    });
+
+    new_world.0.iter_mut().for_each(|entity| {
+        physics::step_entity_physics(entity, config.drag_coefficient, delta_time)
+    });
+
+    new_world
+}
+
 
 pub fn origin_at_boid(boid: &Entity, World(boids): &World) -> World {
     World(

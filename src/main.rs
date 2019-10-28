@@ -1,8 +1,7 @@
-use gl::{glutin, Surface};
+use gl::{glutin};
 use glium as gl;
 use nalgebra_glm as na;
 use std::time::Instant;
-use std::sync::mpsc;
 
 mod boids;
 mod config;
@@ -14,42 +13,13 @@ mod test_utils;
 mod utilities;
 use utilities::*;
 
-fn step_world<F>(
-    world: &boids::World,
-    config: &config::Config,
-    goal_functions: &[F],
-    delta_time: f32,
-) -> boids::World
-where
-    F: Fn(&physics::Entity, &boids::World) -> boids::goals::Goal,
-{
-    let mut new_world = world.clone().map_with_rest_of_world(|boid, world| {
-        let resultant_goal = boids::goals::resultant_goal(
-            boid,
-            world,
-            boids::goals::InfluenceRadius(config.influence_radius),
-            goal_functions,
-        );
-        let updated =
-            boids::strategies::v1(resultant_goal, boid, config.max_ang_vel, config.max_force);
-        updated
-    });
-
-    new_world.0.iter_mut().for_each(|entity| {
-        physics::step_entity_physics(entity, config.drag_coefficient, delta_time)
-    });
-
-    new_world
-}
-
 fn main() {
     let mut session_config = config::read_config("boids.toml");
-    let (sender, receiver) = mpsc::channel();
-    let hotwatch = config::watch_config("boids.toml", sender);
+    let (config_receiver, _hotwatch) = config::watch_config("boids.toml");
 
+    let influence_radius = boids::goals::InfluenceRadius(session_config.influence_radius);
     let goal_functions: Vec<Box<dyn Fn(&physics::Entity, &boids::World) -> boids::goals::Goal>> = vec![
-        //Box::new(|_, world| boids::goals::center_of_mass(world, config.influence_radius)),
-        Box::new(|boid, _| boids::goals::static_goal(boid, &na::vec2(1.0, 0.0))),
+        Box::new(|_, world| boids::goals::center_of_mass(world, influence_radius)),
     ];
 
     let (display, mut events_loop) =
@@ -70,10 +40,10 @@ fn main() {
             }
         });
 
-        session_config = receiver.try_recv().unwrap_or_else(|_| session_config);
+        session_config = config_receiver.try_recv().unwrap_or_else(|_| session_config);
 
         if delta.elapsed().as_secs_f64() >= 0.016 {
-            world = step_world(&world, &session_config, &goal_functions[..], 0.016);
+            world = boids::step_world(&world, &session_config, &goal_functions[..], 0.016);
             delta = Instant::now();
         }
 

@@ -38,10 +38,6 @@ impl Clone for Entity {
 }
 
 pub fn add_force(entity: &mut Entity, force: na::Vec2) {
-    let angle = na::angle(&entity.rot, &force);
-    if (angle * 100.0).round() / 100.0 != 0.0 && na::magnitude(&force) > 0.00001 {
-        return;
-    }
     entity.forces.push(force);
 }
 
