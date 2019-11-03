@@ -5,3 +5,5 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc d55db575daab14eefe472bb37b2f7d512a899093e31e4b2df1720daf8e32963f # shrinks to resultant_goal = Matrix { data: [0.0, 0.0] }, rot_angle = 0.0, max_ang_vel = 0.01, max_force = 0.01
+cc 1485ee1ad12d163140a677190824f5ab7e17ed559c5c2ecd8af4838179837b50 # shrinks to vecA = Matrix { data: [0.0, 0.0] }
+cc 43177961c21fc9178f7314cd79272e0ab4891700865e08aacdfa69e355ae40ff # shrinks to vec_a = Matrix { data: [0.0, 0.01] }, vec_b = Matrix { data: [-0.41010213, -0.01] }

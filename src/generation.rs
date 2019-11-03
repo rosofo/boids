@@ -16,8 +16,8 @@ pub fn random_world(population: u32, min_pos: na::Vec2, max_pos: na::Vec2) -> Wo
         let rot = na::rotate_vec2(&na::vec2(1.0, 0.0), rng.gen_range(0.0, 2.0 * PI));
 
         boids.push(Entity {
-            pos: pos,
-            rot: rot,
+            pos,
+            rot,
             ..Default::default()
         });
     }

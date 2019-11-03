@@ -1,0 +1,16 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "target\\debug\\boids.exe",
+      "name": "boids.exe"
+    },
+    {
+      "type": "default",
+      "project": "target\\debug\\boids.exe",
+      "name": "boids.exe(1)"
+    }
+  ]
+}

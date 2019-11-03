@@ -78,19 +78,16 @@ impl Drawer {
             if *prim_type == kind {
                 index = Some(i);
             }
-
-            return;
         });
 
         let converted = verts.iter().map(vec3_to_vertex);
 
-        if index.is_none() {
+        if let Some(i) = index {
+            vertices[i].extend(converted);
+        } else {
             vertices.push(converted.collect());
             self.types.push(kind);
-        } else {
-            vertices[index.unwrap()].extend(converted);
         }
-
     }
 
     pub fn draw(&mut self, frame: &mut gl::Frame) {
@@ -112,7 +109,6 @@ impl Drawer {
     ) {
         let vertex_buffer = gl::vertex::VertexBuffer::new(&self.display, verts).unwrap();
 
-        frame.clear_color(0.0, 0.0, 0.0, 1.0);
         frame
             .draw(
                 &vertex_buffer,

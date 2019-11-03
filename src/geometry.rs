@@ -1,10 +1,27 @@
+use crate::boids::World;
+use crate::physics::Entity;
 use glium::index::PrimitiveType;
 use nalgebra_glm as na;
 
 pub struct Model(pub Vec<na::Vec3>, pub PrimitiveType);
 
-pub fn boid(scale: f32) -> Model {
-    let m = na::scaling2d(&na::vec2(scale, scale));
+impl Model {
+    pub fn map<F: Fn(&na::Vec3) -> na::Vec3>(&self, f: F) -> Model {
+        Model(self.0.iter().map(f).collect(), self.1)
+    }
+}
+
+pub fn world_to_models<F: Fn(&Entity) -> Model>(
+    World(entities): &World,
+    funcs: &[F],
+) -> Vec<Model> {
+    entities
+        .iter()
+        .flat_map(|entity| funcs.iter().map(move |f| f(entity)))
+        .collect()
+}
+
+pub fn boid() -> Model {
     Model(
         vec![
             na::vec3(0.0, 1.0, 1.0),
@@ -13,11 +30,32 @@ pub fn boid(scale: f32) -> Model {
             na::vec3(0.0, 1.0, 1.0),
             na::vec3(1.0, -1.0, 1.0),
             na::vec3(0.0, 0.0, 1.0),
+        ],
+        PrimitiveType::TrianglesList,
+    )
+}
+
+pub fn arrow_vector(vector: &na::Vec2) -> Model {
+    let magnitude = na::magnitude(vector);
+    let scaled = magnitude * 0.2;
+    let mut angle = na::angle(&na::vec2(0.0, 1.0), vector);
+    if vector.x > 0.0 {
+        angle = -angle;
+    }
+
+    Model(
+        vec![
+            na::vec3(0.0, 0.0, 1.0),
+            na::vec3(0.0, magnitude, 1.0),
+            na::vec3(0.0, magnitude, 1.0),
+            na::vec3(-scaled, magnitude - scaled, 1.0),
+            na::vec3(0.0, magnitude, 1.0),
+            na::vec3(scaled, magnitude - scaled, 1.0),
         ]
         .iter()
-        .map(|v| m * v)
+        .map(|v| na::rotation2d(angle) * v)
         .collect(),
-        PrimitiveType::TrianglesList,
+        PrimitiveType::LinesList,
     )
 }
 
@@ -32,20 +70,6 @@ pub fn position_rotation_to_matrix(pos: &na::Vec2, rot: &na::Vec2) -> na::Mat3 {
         angle = -angle
     }
     na::translation2d(&pos.xy()) * na::rotation2d(angle)
-}
-
-pub fn position_rotation_to_model(
-    pos: &na::Vec2,
-    vel: &na::Vec2,
-    Model(verts, kind): &Model,
-) -> Model {
-    Model(
-        verts
-            .iter()
-            .map(|v| position_rotation_to_matrix(pos, vel) * v)
-            .collect(),
-        *kind,
-    )
 }
 
 #[cfg(test)]
